@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>MD BHAI AI - USER PANEL</title>
+<style>
+body{background:#000;color:#fff;font-family:Arial;text-align:center;padding:10px;}
+.card{width:95%;max-width:480px;margin:20px auto;background:#111;padding:20px;border-radius:18px;box-shadow:0 0 25px #00e1ff50;}
+.header{font-size:24px;font-weight:bold;color:#00e1ff;text-shadow:0 0 12px #00e1ff;margin-bottom:15px;}
+input{width:85%;padding:12px;border:none;border-radius:10px;margin-top:10px;font-size:16px;}
+button{width:80%;padding:12px;margin-top:12px;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;}
+#winBtn{background:#00ff62;color:#000;}
+#lossBtn{background:#ff0033;color:#fff;}
+table{width:100%;margin-top:15px;border-collapse:collapse;}
+th,td{border:1px solid #00e1ff;padding:8px;font-size:14px;text-align:center;}
+th{background:#00e1ff;color:#000;}
+</style>
+</head>
+<body>
+
+<!-- USER LOGIN -->
+<div class="card" id="loginBox">
+<div class="header">MD BHAI VERSION 1.2v</div>
+<input id="userKey" placeholder="Enter Access Key">
+<button onclick="enterUser()">ENTER</button>
+</div>
+
+<!-- PREDICTION PANEL -->
+<div class="card" id="predictBox" style="display:none;">
+<div class="header">MD BHAI VERSION 1.2v</div>
+<p><b>PERIOD NUMBER:</b> <span id="period">---</span></p>
+<p><b>TIMER:</b> <span id="timer">---</span></p>
+<h3>PREDICTION: <span id="res">---</span></h3>
+<button onclick="predict()">GENERATE PREDICTION</button>
+<button id="winBtn" onclick="markWin()">WIN</button>
+<button id="lossBtn" onclick="markLoss()">LOSS</button>
+
+<h4>HISTORY (LAST 10)</h4>
+<table id="historyTable">
+<thead>
+<tr><th>PERIOD</th><th>PREDICTION</th><th>WIN/LOSS</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+
+<script>
+// ---------- PATTERNS ----------
+let patterns = [];
+for(let i=0;i<100;i++){
+    if(i%2==0) patterns.push("BIG");
+    else if(i%5==0) patterns.push("SMALL");
+    else patterns.push(["BIG","SMALL","BIG"][i%3]);
+}
+
+// ---------- USER LOGIN ----------
+let historyData = [];
+const userKeySaved = "MD BHAI"; // <-- Key set here
+
+function enterUser(){  
+  let key = document.getElementById("userKey").value.trim();    
+  if(key === userKeySaved){    
+    document.getElementById("loginBox").style.display="none";    
+    document.getElementById("predictBox").style.display="block";    
+  } else { alert("Wrong Key"); }    
+}
+
+// ---------- PERIOD & TIMER ----------
+function updatePeriodAndTimer(){
+    const now = new Date();
+    const utcHours = now.getUTCHours();
+    const utcMinutes = now.getUTCMinutes();
+    const utcSeconds = now.getUTCSeconds();
+
+    const totalMinutes = utcHours*60 + utcMinutes;
+
+    const yyyyMMdd = now.getUTCFullYear().toString() +
+                     String(now.getUTCMonth()+1).padStart(2,'0') +
+                     String(now.getUTCDate()).padStart(2,'0');
+
+    // Android-style period number
+    const periodNo = yyyyMMdd + "1000" + String(10001 + totalMinutes);
+    document.getElementById("period").innerText = periodNo;
+
+    // 1-minute countdown timer
+    const remainingSeconds = 60 - utcSeconds;
+    const formattedTime = "   0  : " + String(remainingSeconds).padStart(2," ");
+    document.getElementById("timer").innerText = formattedTime;
+}
+
+setInterval(updatePeriodAndTimer,1000);
+updatePeriodAndTimer();
+
+// ---------- PREDICTION ----------
+function predict(){
+    let period = document.getElementById("period").innerText;
+    let pred = patterns[Math.floor(Math.random()*patterns.length)];
+    document.getElementById("res").innerText = pred;
+
+    historyData.unshift({period:period,prediction:pred,result:"PENDING"});
+    if(historyData.length>10) historyData.pop();
+    renderHistory();
+}
+
+// ---------- WIN / LOSS ----------
+function markWin(){ if(historyData.length>0){ historyData[0].result="WIN"; renderHistory(); } }
+function markLoss(){ if(historyData.length>0){ historyData[0].result="LOSS"; renderHistory(); } }
+
+// ---------- RENDER HISTORY ----------
+function renderHistory(){
+    let tbody = document.querySelector("#historyTable tbody");
+    tbody.innerHTML = "";
+    historyData.forEach(row=>{
+        let tr = document.createElement("tr");
+        tr.innerHTML = `<td>${row.period}</td><td>${row.prediction}</td><td>${row.result}</td>`;
+        tbody.appendChild(tr);
+    });
+}
+</script>
+</body>
+  </html>
